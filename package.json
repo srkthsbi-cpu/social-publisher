@@ -1,0 +1,6 @@
+{
+  "name": "social-publisher-v8-pwa",
+  "private": true,
+  "scripts": {"deploy": "wrangler deploy"},
+  "devDependencies": {"wrangler": "latest"}
+}
