@@ -245,7 +245,7 @@ body{background:linear-gradient(180deg,#f7f9fb 0%,#edf1f4 100%);color:var(--text
 .pageRow{background:#fff!important;border:1px solid #e1e6eb!important;color:#25333d!important}.pageRow.selected{border-color:#8ebce8!important;background:#f1f7fd!important}
 .job{background:#fff!important;border:1px solid #dfe5ea!important}.job.error{border-color:#efb9b9!important}.job.done{border-color:#b8dec9!important}
 .typeInfo,.softNotice,.fieldHint{color:#596872!important;background:#f7f9fa!important;border-color:#e3e8ec!important}
-.bottomDock{position:sticky!important;bottom:10px!important}
+.bottomDock{position:fixed!important;bottom:max(10px,env(safe-area-inset-bottom))!important}
 .screenSection{scroll-margin-top:20px}
 `;
 
@@ -1254,5 +1254,14 @@ function cleanError(e) {
 }
 
 function privacy() {
-  return html(`<!doctype html><html lang="tr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Gizlilik Politikası</title><style>body{font-family:Arial;max-width:800px;margin:40px auto;padding:20px;line-height:1.7;color:#222}h1,h2{color:#005082}</style></head><body><h1>Gizlilik Politikası</h1><p><strong>Son güncelleme:</strong> 23 Eylül 2026</p><p>Social Publisher, kullanıcının yetkili olduğu Facebook Sayfalarında içerik yayınlamasını kolaylaştırmak amacıyla geliştirilmiştir.</p><h2>Verilerin kullanımı</h2><p>Facebook hesap ve Sayfa bilgileri yalnızca yetkili yayınlama işlemleri için kullanılır.</p><h2>Saklama</h2><p>Uygulama kendi veritabanında içerik, fotoğraf veya video arşivi oluşturmaz. R2, KV ve D1 kullanılmaz. Medya yayınlama sırasında geçici olarak işlenir ve uygulama tarafından kalıcı olarak arşivlenmez.</p><h2>Oturum</h2><p>Uygulama oturumu 48 saatlik HttpOnly güvenli cookie ile yönetilir. Facebook erişim yetkisinin gerçek geçerlilik süresi Meta tarafından belirlenir.</p><h2>İletişim</h2><p>qasimm2012@gmail.com</p></body></html>`);
+  return html(`<!doctype html><html lang="tr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Gizlilik Politikası</title><style>body{font-family:Arial;max-width:800px;margin:40px auto;padding:20px;line-height:1.7;color:#222}h1,h2{color:#005082}
+/* V8.1 mobile layout fix */
+html,body{width:100%;min-height:100%;overflow-x:hidden!important;}
+body{overflow-y:auto!important;}
+.appShell{padding-bottom:150px!important;}
+.pageList{max-height:none!important;overflow:visible!important;}
+.bottomDock{position:fixed!important;left:50%!important;right:auto!important;bottom:max(10px,env(safe-area-inset-bottom))!important;transform:translateX(-50%)!important;width:calc(100% - 16px)!important;max-width:680px!important;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;z-index:999!important;}
+.navItem{min-width:0!important;width:100%!important;}
+@media(max-width:560px){.appShell{padding-bottom:155px!important}.pageList{max-height:none!important}.bottomDock{width:calc(100% - 16px)!important;bottom:max(8px,env(safe-area-inset-bottom))!important;border-radius:24px!important;}}
+</style></head><body><h1>Gizlilik Politikası</h1><p><strong>Son güncelleme:</strong> 23 Eylül 2026</p><p>Social Publisher, kullanıcının yetkili olduğu Facebook Sayfalarında içerik yayınlamasını kolaylaştırmak amacıyla geliştirilmiştir.</p><h2>Verilerin kullanımı</h2><p>Facebook hesap ve Sayfa bilgileri yalnızca yetkili yayınlama işlemleri için kullanılır.</p><h2>Saklama</h2><p>Uygulama kendi veritabanında içerik, fotoğraf veya video arşivi oluşturmaz. R2, KV ve D1 kullanılmaz. Medya yayınlama sırasında geçici olarak işlenir ve uygulama tarafından kalıcı olarak arşivlenmez.</p><h2>Oturum</h2><p>Uygulama oturumu 48 saatlik HttpOnly güvenli cookie ile yönetilir. Facebook erişim yetkisinin gerçek geçerlilik süresi Meta tarafından belirlenir.</p><h2>İletişim</h2><p>qasimm2012@gmail.com</p></body></html>`);
 }
