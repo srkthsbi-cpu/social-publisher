@@ -1188,7 +1188,7 @@ function parseCookies(header) {
 }
 
 function cookieString(name, value, maxAge) {
-  return `${name}=${encodeURIComponent(value)}; Max-Age=${maxAge}; Path=/; HttpOnly; Secure; SameSite=Lax`;
+  return `${name}=${encodeURIComponent(value)}; Max-Age=${maxAge}; Path=/; HttpOnly; Secure; SameSite=None`;
 }
 
 function cookie(name, value, maxAge) {
