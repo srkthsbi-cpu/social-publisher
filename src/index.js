@@ -3,7 +3,7 @@ const GRAPH_VERSION = "v26.0";
 const GRAPH = `https://graph.facebook.com/${GRAPH_VERSION}`;
 const RUPLOAD_HOST = "rupload.facebook.com";
 
-const SESSION_TTL = 48 * 60 * 60; // 48 saat
+const SESSION_TTL = 60 * 24 * 60 * 60; // 60 gün
 const OAUTH_TTL = 10 * 60;
 
 const APP_HTML = `<!doctype html><html lang="tr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"><meta name="theme-color" content="#e9eef2"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/pwa-icon-180.png"><link rel="stylesheet" href="/style.css?v=8"><title>Social Publisher</title></head><body class="appBody">
@@ -477,7 +477,7 @@ async function apiPages(request) {
 
   return json({
     success: true,
-    sessionHours: 48,
+    sessionHours: 1440,
     metaGraphVersion: GRAPH_VERSION,
     pageCount: pages.length,
     pages: pages.map(p => ({
@@ -1184,7 +1184,7 @@ function home() {
     <h1>Tek dokunuşla<br><span>çoklu yayın.</span></h1>
     <p>Facebook Sayfalarını ve bağlı Instagram hesaplarını tek merkezden yönet.</p>
     <a class="landingButton liquidButton" href="/login">Facebook ile Bağlan <span>→</span></a>
-    <div class="landingMeta"><span>48 saatlik oturum</span><span>•</span><span>Arşiv yok</span><span>•</span><span>R2/KV/D1 yok</span></div>
+    <div class="landingMeta"><span>60 günlük oturum</span><span>•</span><span>Arşiv yok</span><span>•</span><span>R2/KV/D1 yok</span></div>
     <a href="/privacy" class="privacyLink">Gizlilik Politikası</a>
   </section>
 </main>
@@ -1317,5 +1317,5 @@ body{overflow-y:auto!important;}
 .bottomDock{position:fixed!important;left:50%!important;right:auto!important;bottom:max(10px,env(safe-area-inset-bottom))!important;transform:translateX(-50%)!important;width:calc(100% - 16px)!important;max-width:680px!important;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;z-index:999!important;}
 .navItem{min-width:0!important;width:100%!important;}
 @media(max-width:560px){.appShell{padding-bottom:155px!important}.pageList{max-height:none!important}.bottomDock{width:calc(100% - 16px)!important;bottom:max(8px,env(safe-area-inset-bottom))!important;border-radius:24px!important;}}
-</style></head><body><h1>Gizlilik Politikası</h1><p><strong>Son güncelleme:</strong> 23 Eylül 2026</p><p>Social Publisher, kullanıcının yetkili olduğu Facebook Sayfalarında içerik yayınlamasını kolaylaştırmak amacıyla geliştirilmiştir.</p><h2>Verilerin kullanımı</h2><p>Facebook hesap ve Sayfa bilgileri yalnızca yetkili yayınlama işlemleri için kullanılır.</p><h2>Saklama</h2><p>Uygulama kendi veritabanında içerik, fotoğraf veya video arşivi oluşturmaz. R2, KV ve D1 kullanılmaz. Medya yayınlama sırasında geçici olarak işlenir ve uygulama tarafından kalıcı olarak arşivlenmez.</p><h2>Oturum</h2><p>Uygulama oturumu 48 saatlik HttpOnly güvenli cookie ile yönetilir. Facebook erişim yetkisinin gerçek geçerlilik süresi Meta tarafından belirlenir.</p><h2>İletişim</h2><p>qasimm2012@gmail.com</p></body></html>`);
+</style></head><body><h1>Gizlilik Politikası</h1><p><strong>Son güncelleme:</strong> 23 Eylül 2026</p><p>Social Publisher, kullanıcının yetkili olduğu Facebook Sayfalarında içerik yayınlamasını kolaylaştırmak amacıyla geliştirilmiştir.</p><h2>Verilerin kullanımı</h2><p>Facebook hesap ve Sayfa bilgileri yalnızca yetkili yayınlama işlemleri için kullanılır.</p><h2>Saklama</h2><p>Uygulama kendi veritabanında içerik, fotoğraf veya video arşivi oluşturmaz. R2, KV ve D1 kullanılmaz. Medya yayınlama sırasında geçici olarak işlenir ve uygulama tarafından kalıcı olarak arşivlenmez.</p><h2>Oturum</h2><p>Uygulama oturumu 60 günlük HttpOnly güvenli cookie ile yönetilir. Facebook erişim yetkisinin gerçek geçerlilik süresi Meta tarafından belirlenir.</p><h2>İletişim</h2><p>qasimm2012@gmail.com</p></body></html>`);
 }
