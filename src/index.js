@@ -17,14 +17,13 @@ const APP_HTML = `<!doctype html><html lang="tr"><head><meta charset="UTF-8"><me
 <section id="homeSection" class="screenSection">
   <div class="heroGlass glass">
     <div class="heroOrb"><span>SP</span></div>
-    <div><div class="heroKicker">YAYIN MERKEZİ</div><h1>İçeriğini seç.<br><span>Hedeflerini belirle.</span></h1><p>Facebook Sayfaları ve bağlı Instagram hesaplarına tek akıştan yayınla.</p></div>
-    <div class="heroStats"><div><b id="heroPageCount">—</b><small>Sayfa</small></div><div><b id="heroIgCount">—</b><small>Instagram</small></div><div><b id="heroSelected">0</b><small>Seçili</small></div></div>
+    <div><div class="heroKicker">YAYIN MERKEZİ</div><h1>İçeriğini seç.<br><span>Hedeflerini belirle.</span></h1><p>Facebook Sayfalarına tek akıştan yayınla.</p></div>
+    <div class="heroStats"><div><b id="heroPageCount">—</b><small>Sayfa</small></div><div><b id="heroSelected">0</b><small>Seçili</small></div></div>
   </div>
 
   <section class="glass panel" id="targetsPanel">
     <div class="sectionHead"><div><span class="sectionKicker">HEDEFLER</span><h2>Yayın nereye gitsin?</h2></div><span id="count" class="countBubble">0</span></div>
-    <div class="segmented glassInner" role="tablist"><button id="fbTarget" class="segment active touch" data-platform="facebook">Facebook</button><button id="igTarget" class="segment touch" data-platform="instagram">Instagram</button></div>
-    <div id="igNote" class="softNotice hidden">Instagram listesi yalnızca bağlı ve erişilebilir Professional hesapları gösterir.</div>
+    <div class="segmented glassInner" role="tablist"><button id="fbTarget" class="segment active touch" data-platform="facebook">Facebook</button></div>
     <div class="targetTools"><button id="selectAllBtn" class="miniButton touch">Tümünü seç</button><button id="clearAllBtn" class="miniButton touch">Temizle</button><button id="refreshPagesBtn" class="miniButton touch">↻ Meta'dan yenile</button><div class="searchWrap glassInner"><span>⌕</span><input id="search" placeholder="Sayfa ara..." autocomplete="off"></div></div>
     <div id="pages" class="pageList"><div class="loadingState"><span class="spinner"></span>Sayfalar hazırlanıyor</div></div>
   </section>
@@ -44,7 +43,6 @@ const APP_HTML = `<!doctype html><html lang="tr"><head><meta charset="UTF-8"><me
     <label class="fieldLabel">Açıklama</label>
     <textarea id="message" class="glassInput" placeholder="Ne paylaşmak istiyorsun?" spellcheck="true"></textarea>
     <div id="mediaBox"></div>
-    <div id="instagramUrlBox" class="hidden"><label class="fieldLabel">Instagram medya URL'si</label><input id="instagramMediaUrl" class="glassInput" placeholder="https://..." inputmode="url"><div class="fieldHint">Meta'nın erişebileceği herkese açık bir medya URL'si.</div></div>
     <div id="reelOptions" class="hidden"><label class="fieldLabel">Reel başlığı</label><input id="reelTitle" class="glassInput" placeholder="İsteğe bağlı"></div>
     <div id="storyOptions" class="hidden"><div class="storySwitch"><button class="storyTab active touch" data-story="photo">Foto Story</button><button class="storyTab touch" data-story="video">Video Story</button></div><div id="storyHint" class="fieldHint">Dikey görsel seçin.</div></div>
     <div id="preview" class="previewGlass hidden"></div>
@@ -71,31 +69,31 @@ const APP_HTML = `<!doctype html><html lang="tr"><head><meta charset="UTF-8"><me
 <div id="toast" class="toastGlass"></div>
 </main><script src="/app.js?v=6" defer></script></body></html>`;
 const APP_JS = `
-let pages=[];let currentType='post';let storyType='photo';let platform='facebook';let jobs=[];let lastPayload=null;const selectedByPlatform={facebook:new Set(),instagram:new Set()};
+let pages=[];let currentType='post';let storyType='photo';let jobs=[];let lastPayload=null;const selected=new Set();
 const CHUNK_SIZE=24*1024*1024;const CONCURRENCY=3;
 const $=id=>document.getElementById(id);const qs=s=>document.querySelector(s);const qsa=s=>[...document.querySelectorAll(s)];
 async function api(url,options={}){const r=await fetch(url,options);const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'İşlem başarısız.');return d}
 function xhrApi(url,options={},onProgress){return new Promise((resolve,reject)=>{const x=new XMLHttpRequest();x.open(options.method||'POST',url,true);if(options.headers)Object.entries(options.headers).forEach(([k,v])=>x.setRequestHeader(k,v));x.upload.onprogress=e=>{if(e.lengthComputable&&onProgress)onProgress(e.loaded,e.total)};x.onload=()=>{let d={};try{d=JSON.parse(x.responseText||'{}')}catch{}if(x.status>=200&&x.status<300)resolve(d);else reject(new Error(d.error||('HTTP '+x.status)))};x.onerror=()=>reject(new Error('Ağ bağlantısı başarısız.'));x.onabort=()=>reject(new Error('İşlem iptal edildi.'));x.send(options.body||null)})}
 function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(window.__toast);window.__toast=setTimeout(()=>t.classList.remove('show'),2600)}
 function navTo(name){qsa('.navItem').forEach(b=>b.classList.toggle('active',b.dataset.nav===name));qsa('.screenSection').forEach(s=>s.classList.add('hidden'));const map={home:'homeSection',publish:'publishSection',queue:'queueSection',accounts:'accountsSection'};const target=$(map[name]);if(target)target.classList.remove('hidden');const active=qsa('.navItem').find(b=>b.dataset.nav===name);const dock=document.querySelector('.bottomDock');if(active&&dock){const r=active.getBoundingClientRect(),d=dock.getBoundingClientRect();dock.style.setProperty('--glow-left',(r.left-d.left+((r.width-74)/2))+'px')}if(name==='queue'){}}
-function bindUI(){qsa('.navItem').forEach(b=>b.addEventListener('click',()=>navTo(b.dataset.nav)));qsa('.liquidButton').forEach(b=>b.addEventListener('pointerdown',()=>{b.classList.add('pressed');setTimeout(()=>b.classList.remove('pressed'),220)}));$('fbTarget').addEventListener('click',()=>setPlatform('facebook'));$('igTarget').addEventListener('click',()=>setPlatform('instagram'));$('selectAllBtn').addEventListener('click',selectAll);$('clearAllBtn').addEventListener('click',clearAll);$('refreshPagesBtn').addEventListener('click',refreshPages);$('search').addEventListener('input',renderPages);qsa('.contentCard').forEach(b=>b.addEventListener('click',()=>setType(b.dataset.type)));qsa('.storyTab').forEach(b=>b.addEventListener('click',()=>setStoryType(b.dataset.story)));$('publishBtn').addEventListener('click',publish);$('retryBtn').addEventListener('click',retryFailed);$('clearQueueBtn').addEventListener('click',clearQueue);}
-async function loadPages(){try{const d=await api('/api/pages');pages=d.pages||[];$('heroPageCount').textContent=pages.length;$('heroIgCount').textContent=pages.filter(p=>p.instagramBusinessAccount).length;renderPages();renderAccounts();if(pages.length<12)toast('Meta şu anda '+pages.length+' Facebook Sayfası döndürüyor. Eksik sayfalar için yeniden Meta bağlantısı gerekir.')}catch(e){$('pages').innerHTML='<div class="loadingState">⚠️ '+esc(e.message)+'</div>';toast(e.message)}}
+function bindUI(){qsa('.navItem').forEach(b=>b.addEventListener('click',()=>navTo(b.dataset.nav)));qsa('.liquidButton').forEach(b=>b.addEventListener('pointerdown',()=>{b.classList.add('pressed');setTimeout(()=>b.classList.remove('pressed'),220)}));$('fbTarget').addEventListener('click',()=>setPlatform('facebook'));$('selectAllBtn').addEventListener('click',selectAll);$('clearAllBtn').addEventListener('click',clearAll);$('refreshPagesBtn').addEventListener('click',refreshPages);$('search').addEventListener('input',renderPages);qsa('.contentCard').forEach(b=>b.addEventListener('click',()=>setType(b.dataset.type)));qsa('.storyTab').forEach(b=>b.addEventListener('click',()=>setStoryType(b.dataset.story)));$('publishBtn').addEventListener('click',publish);$('retryBtn').addEventListener('click',retryFailed);$('clearQueueBtn').addEventListener('click',clearQueue);}
+async function loadPages(){try{const d=await api('/api/pages');pages=d.pages||[];$('heroPageCount').textContent=pages.length;renderPages();renderAccounts();if(pages.length<12)toast('Meta şu anda '+pages.length+' Facebook Sayfası döndürüyor. Eksik sayfalar için yeniden Meta bağlantısı gerekir.')}catch(e){$('pages').innerHTML='<div class="loadingState">⚠️ '+esc(e.message)+'</div>';toast(e.message)}}
 async function refreshPages(){const b=$('refreshPagesBtn');if(b){b.disabled=true;b.textContent='↻ Yenileniyor…'}try{await loadPages();toast(pages.length+' Facebook Sayfası Meta’dan alındı.')}finally{if(b){b.disabled=false;b.textContent='↻ Meta’dan yenile'}}}
-function visibleTargets(){const q=($('search').value||'').toLowerCase();return pages.filter(p=>p.name.toLowerCase().includes(q)&&(platform==='facebook'||!!p.instagramBusinessAccount))}
-function renderPages(){const list=visibleTargets();const selected=selectedByPlatform[platform];$('pages').innerHTML=list.length?list.map(p=>{const checked=selected.has(String(p.id));return '<label class="pageRow '+(checked?'selected':'')+'"><input class="pageCheck" id="p_'+escAttr(p.id)+'" type="checkbox" value="'+escAttr(p.id)+'" '+(checked?'checked':'')+'><span class="pageName">'+esc(p.name)+'</span>'+(p.instagramBusinessAccount?'<span class="igBadge">Instagram bağlı</span>':'')+'</label>'}).join(''):'<div class="loadingState">Bu hedefte gösterilecek hesap bulunamadı.</div>';qsa('.pageCheck').forEach(x=>x.addEventListener('change',()=>{const id=String(x.value);if(x.checked)selected.add(id);else selected.delete(id);x.closest('.pageRow').classList.toggle('selected',x.checked);updateCount()}));updateCount()}
-function selectedIds(){return [...selectedByPlatform[platform]]}
+function visibleTargets(){const q=($('search').value||'').toLowerCase();return pages.filter(p=>p.name.toLowerCase().includes(q))}
+function renderPages(){const list=visibleTargets();const selectedSet=selected;$('pages').innerHTML=list.length?list.map(p=>{const checked=selectedSet.has(String(p.id));return '<label class="pageRow '+(checked?'selected':'')+'"><input class="pageCheck" id="p_'+escAttr(p.id)+'" type="checkbox" value="'+escAttr(p.id)+'" '+(checked?'checked':'')+'><span class="pageName">'+esc(p.name)+'</span>'+''+'</label>'}).join(''):'<div class="loadingState">Bu hedefte gösterilecek hesap bulunamadı.</div>';qsa('.pageCheck').forEach(x=>x.addEventListener('change',()=>{const id=String(x.value);if(x.checked)selected.add(id);else selected.delete(id);x.closest('.pageRow').classList.toggle('selected',x.checked);updateCount()}));updateCount()}
+function selectedIds(){return [...selected]}
 function updateCount(){const n=selectedIds().length;$('count').textContent=n;$('heroSelected').textContent=n;$('publishCount').textContent=n}
-function selectAll(){visibleTargets().forEach(p=>selectedByPlatform[platform].add(String(p.id)));renderPages();toast('Görünen hedeflerin tamamı seçildi')}
-function clearAll(){selectedByPlatform[platform].clear();renderPages()}
-function setPlatform(v){platform=v;$('fbTarget').classList.toggle('active',v==='facebook');$('igTarget').classList.toggle('active',v==='instagram');$('igNote').classList.toggle('hidden',v!=='instagram');renderPages();if(v==='instagram'&&!['photo','reel'].includes(currentType)){setType('photo');toast('Instagram için Fotoğraf veya Reel seçildi')}}
-function setType(type){currentType=type;qsa('.contentCard').forEach(b=>b.classList.toggle('active',b.dataset.type===type));$('reelOptions').classList.toggle('hidden',type!=='reel');$('storyOptions').classList.toggle('hidden',type!=='story');$('instagramUrlBox').classList.toggle('hidden',platform!=='instagram'||!['photo','reel'].includes(type));const info={post:'Metin veya bağlantı içeren normal Facebook gönderisi.',photo:'Fotoğraf gönderisi.',video:'Normal Facebook video gönderisi. Büyük videolar parçalara ayrılarak yüklenir.',reel:'Facebook Reel. Yükleme sonrası Meta işleme durumu takip edilir.',story:'Facebook Story.'};$('typeInfo').textContent=info[type];const m=$('mediaBox');if(type==='post')m.innerHTML='';else if(type==='photo')m.innerHTML=fileInput('photoFile','image/*','Fotoğraf seç');else if(type==='video')m.innerHTML=fileInput('videoFile','video/*','Video seç');else if(type==='reel')m.innerHTML=fileInput('reelFile','video/*','Reel videosu seç');else m.innerHTML=fileInput('storyFile',storyType==='photo'?'image/*':'video/*',storyType==='photo'?'Story görseli seç':'Story videosu seç');bindFileEvents()}
+function selectAll(){visibleTargets().forEach(p=>selected.add(String(p.id)));renderPages();toast('Görünen hedeflerin tamamı seçildi')}
+function clearAll(){selected.clear();renderPages()}
+function setPlatform(v){platform='facebook';$('fbTarget').classList.add('active');renderPages()}
+function setType(type){currentType=type;qsa('.contentCard').forEach(b=>b.classList.toggle('active',b.dataset.type===type));$('reelOptions').classList.toggle('hidden',type!=='reel');$('storyOptions').classList.toggle('hidden',type!=='story');const info={post:'Metin veya bağlantı içeren normal Facebook gönderisi.',photo:'Fotoğraf gönderisi.',video:'Normal Facebook video gönderisi. Büyük videolar parçalara ayrılarak yüklenir.',reel:'Facebook Reel. Yükleme sonrası Meta işleme durumu takip edilir.',story:'Facebook Story.'};$('typeInfo').textContent=info[type];const m=$('mediaBox');if(type==='post')m.innerHTML='';else if(type==='photo')m.innerHTML=fileInput('photoFile','image/*','Fotoğraf seç');else if(type==='video')m.innerHTML=fileInput('videoFile','video/*','Video seç');else if(type==='reel')m.innerHTML=fileInput('reelFile','video/*','Reel videosu seç');else m.innerHTML=fileInput('storyFile',storyType==='photo'?'image/*':'video/*',storyType==='photo'?'Story görseli seç':'Story videosu seç');bindFileEvents()}
 function setStoryType(type){storyType=type;qsa('.storyTab').forEach(b=>b.classList.toggle('active',b.dataset.story===type));$('storyHint').textContent=type==='photo'?'Dikey görsel seçin.':'Dikey video seçin.';if(currentType==='story')setType('story')}
 function fileInput(id,accept,label){return '<div class="fileBox"><div class="fileLabel"><span>'+label+'</span><label class="fileButton touch" for="'+id+'">Dosya seç</label></div><input class="fileInput" id="'+id+'" type="file" accept="'+accept+'"><div id="'+id+'_name" class="fileName">Henüz dosya seçilmedi</div></div>'}
 function bindFileEvents(){const id=currentType==='photo'?'photoFile':currentType==='video'?'videoFile':currentType==='reel'?'reelFile':currentType==='story'?'storyFile':null;const el=id&&$(id);if(!el)return;el.addEventListener('change',()=>{const f=el.files[0];if(!f)return;$(id+'_name').textContent=f.name+' • '+formatBytes(f.size);previewFile(f)})}
 function previewFile(file){const box=$('preview');if(!file){box.classList.add('hidden');return}const u=URL.createObjectURL(file);box.classList.remove('hidden');box.innerHTML=file.type.startsWith('image/')?'<img src="'+u+'" alt="Önizleme">':'<video src="'+u+'" controls playsinline></video>'}
 async function validateFile(file,type){if(!file)throw new Error('Medya seçin.');if(type==='photo'&&!file.type.startsWith('image/'))throw new Error('Geçerli bir görsel seçin.');if(type==='story'&&storyType==='photo'){if(!file.type.startsWith('image/'))throw new Error('Geçerli bir Story görseli seçin.');if(file.size>4*1024*1024)throw new Error('Facebook Story görseli 4 MB veya daha küçük olmalı.');return}if(['video','reel'].includes(type)|| (type==='story'&&storyType==='video')){if(!file.type.startsWith('video/'))throw new Error('Geçerli bir video seçin.');const m=await videoMeta(file);if(type==='reel'&&(m.duration<3||m.duration>90))throw new Error('Facebook Reel için video süresi 3–90 saniye olmalı.');if(type==='reel'&&(m.width/m.height<0.45||m.width/m.height>1.2))throw new Error('Reel için dikey video kullanın.');if(type==='story'&&storyType==='video'){if(m.duration<3||m.duration>60)throw new Error('Facebook Video Story için video 3–60 saniye olmalı.');if(m.width/m.height<0.45||m.width/m.height>0.75)throw new Error('Video Story için 9:16 civarında dikey video kullanın.');}}}
 function videoMeta(file){return new Promise((resolve,reject)=>{const v=document.createElement('video');v.preload='metadata';v.onloadedmetadata=()=>{URL.revokeObjectURL(v.src);resolve({duration:v.duration,width:v.videoWidth,height:v.videoHeight})};v.onerror=()=>reject(new Error('Video bilgisi okunamadı.'));v.src=URL.createObjectURL(file)})}
-async function publish(){const ids=selectedIds();if(!ids.length){toast('Önce en az bir hedef seç');return}const message=$('message').value.trim();let file=null;try{if(platform==='instagram'){if(!['photo','reel'].includes(currentType))throw new Error('Instagram için Fotoğraf veya Reel seçin.');if(!$('instagramMediaUrl').value.trim())throw new Error('Instagram medya URL’si gerekli.')}else{const id=currentType==='photo'?'photoFile':currentType==='video'?'videoFile':currentType==='reel'?'reelFile':currentType==='story'?'storyFile':null;file=id?$(id)?.files[0]:null;if(['photo','video','reel','story'].includes(currentType))await validateFile(file,currentType)};setBusy(true);prepareJobs(ids,file);lastPayload={ids,message,file,type:currentType,storyType,platform,mediaUrl:$('instagramMediaUrl')?.value.trim()||''};navTo('queue');if(platform==='instagram')await publishInstagram(ids,message);else await publishFacebook(ids,message,file)}catch(e){if(jobs.length)addSystemError(e.message);else toast(e.message)}finally{setBusy(false);if(jobs.length)finalizeQueue()}}
+async function publish(){const ids=selectedIds();if(!ids.length){toast('Önce en az bir hedef seç');return}const message=$('message').value.trim();let file=null;try{const id=currentType==='photo'?'photoFile':currentType==='video'?'videoFile':currentType==='reel'?'reelFile':currentType==='story'?'storyFile':null;file=id?$(id)?.files[0]:null;if(['photo','video','reel','story'].includes(currentType))await validateFile(file,currentType);setBusy(true);prepareJobs(ids,file);lastPayload={ids,message,file,type:currentType,storyType,platform};navTo('queue');await publishFacebook(ids,message,file)}catch(e){if(jobs.length)addSystemError(e.message);else toast(e.message)}finally{setBusy(false);if(jobs.length)finalizeQueue()}}
 function prepareJobs(ids,file){jobs=ids.map(id=>({id,name:pageName(id),percent:0,status:'waiting',started:0,finished:0,duration:null,file:file?file.name:'',type:currentType,error:null}));$('queueSection').classList.remove('hidden');renderJobs();updateSummary();}
 function renderJobs(){const sorted=[...jobs].sort((a,b)=>{if(a.duration!=null&&b.duration!=null)return a.duration-b.duration;if(a.duration!=null)return -1;if(b.duration!=null)return 1;return b.percent-a.percent});$('jobs').innerHTML=sorted.map(j=>'<div class="job '+j.status+'" id="job_'+escAttr(j.id)+'"><div class="jobTop"><div><div class="jobTitle">'+statusIcon(j.status)+' '+esc(j.name)+'</div><div class="jobMeta">'+esc(j.file||contentLabel(j.type))+(j.duration!=null?' • '+formatTime(j.duration):'')+'</div></div><div class="jobPercent">'+j.percent+'%</div></div><div class="jobBar"><div style="width:'+j.percent+'%"></div></div><div class="jobState">'+esc(jobState(j))+'</div></div>').join('')}
 function statusIcon(s){return s==='done'?'✓':s==='error'?'×':s==='running'?'◌':'·'}function jobState(j){if(j.status==='done')return 'Tamamlandı • '+formatTime(j.duration);if(j.status==='error')return j.error||'Başarısız';if(j.status==='running')return 'Yükleniyor…';return 'Sırada'}function contentLabel(t){return({post:'Gönderi',photo:'Fotoğraf',video:'Video',reel:'Reel',story:'Story'})[t]||t}
@@ -145,8 +143,7 @@ async function publishStoryOne(id,message,file){
   if(!d?.success)throw new Error(d?.error||'Video Story yayınlanamadı.');
   setJob(id,{percent:100});
 }
-async function publishInstagram(ids,message){const u=$('instagramMediaUrl').value.trim();return runPool(ids,id=>publishInstagramOne(id,message,u))}async function publishInstagramOne(id,message,u){const d=await api('/api/instagram/publish',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({pageId:id,type:currentType==='reel'?'reel':'photo',mediaUrl:u,caption:message,shareToFeed:true})});if(!d.success)throw new Error(d.error||'Instagram yayınlanamadı.');setJob(id,{percent:100})}
-async function retryFailed(){if(!lastPayload)return;const failed=jobs.filter(j=>j.status==='error').map(j=>j.id);if(!failed.length)return;failed.forEach(id=>{const j=jobs.find(x=>x.id===id);Object.assign(j,{status:'waiting',percent:0,error:null,duration:null})});renderJobs();if(lastPayload.platform==='instagram')await runPool(failed,id=>publishInstagramOne(id,lastPayload.message,lastPayload.mediaUrl));else await publishFacebook(failed,lastPayload.message,lastPayload.file);finalizeQueue()}
+async function retryFailed(){if(!lastPayload)return;const failed=jobs.filter(j=>j.status==='error').map(j=>j.id);if(!failed.length)return;failed.forEach(id=>{const j=jobs.find(x=>x.id===id);Object.assign(j,{status:'waiting',percent:0,error:null,duration:null})});renderJobs();await publishFacebook(failed,lastPayload.message,lastPayload.file);finalizeQueue()}
 function finalizeQueue(){renderJobs();updateSummary();const f=jobs.filter(j=>j.status==='error').length;toast(f?'Bazı hedefler başarısız oldu':'Tüm yayınlar tamamlandı')}
 function clearQueue(){jobs=[];$('jobs').innerHTML='';$('queueSection').classList.add('hidden');$('queueSummary').textContent='Hazır'}
 function addSystemError(msg){jobs=[{id:'system',name:'Sistem',percent:0,status:'error',error:msg,duration:0,file:'',type:''}];$('queueSection').classList.remove('hidden');renderJobs()}
@@ -373,10 +370,6 @@ export default {
         return await apiStoryFinish(request);
       }
 
-      if (url.pathname === "/api/instagram/publish" && request.method === "POST") {
-        return await apiInstagramPublish(request);
-      }
-
       return new Response("Not Found", { status: 404 });
     } catch (e) {
       return json({
@@ -400,8 +393,6 @@ function login(url) {
     "pages_show_list",
     "pages_read_engagement",
     "pages_manage_posts",
-    "instagram_basic",
-    "instagram_content_publish"
   ].join(",");
 
   const oauth =
@@ -500,13 +491,12 @@ async function apiPages(request) {
       id: p.id,
       name: p.name,
       tasks: p.tasks || [],
-      instagramBusinessAccount: p.instagram_business_account || null
     }))
   });
 }
 
 async function getPages(userToken) {
-  const fields = "id,name,access_token,tasks,instagram_business_account";
+  const fields = "id,name,access_token,tasks";
   const basicFields = "id,name,access_token,tasks";
 
   async function fetchAll(fieldSet) {
@@ -912,88 +902,6 @@ async function apiReelFinish(request) {
   });
 }
 
-// ============================================================
-// INSTAGRAM (optional; public media URL mode)
-// ============================================================
-
-async function apiInstagramPublish(request) {
-  const body = await request.json();
-  const pageId = String(body.pageId || "");
-  const type = String(body.type || "");
-  const mediaUrl = String(body.mediaUrl || "").trim();
-  const caption = String(body.caption || "");
-  const shareToFeed = body.shareToFeed !== false;
-
-  if (!pageId || !["photo", "reel"].includes(type) || !mediaUrl) {
-    return json({ error: "Instagram için Sayfa, tür ve herkese açık medya URL'si gerekli." }, 400);
-  }
-
-  let parsed;
-  try { parsed = new URL(mediaUrl); } catch { throw new Error("Geçersiz medya URL'si."); }
-  if (!/^https?:$/.test(parsed.protocol)) throw new Error("Medya URL'si http/https olmalı.");
-
-  const { page, token } = await getPageToken(request, pageId);
-  const ig = page.instagram_business_account;
-  if (!ig?.id) throw new Error("Bu Facebook Sayfasına bağlı Instagram Professional hesabı bulunamadı.");
-
-  const igUserId = ig.id;
-
-  if (type === "photo") {
-    const create = new URLSearchParams();
-    create.set("image_url", mediaUrl);
-    create.set("caption", caption);
-    create.set("access_token", token);
-
-    const r = await fetch(`${GRAPH}/${igUserId}/media`, { method: "POST", body: create });
-    const data = await r.json();
-    if (!r.ok || data.error || !data.id) throw new Error(data?.error?.message || "Instagram fotoğraf kapsayıcısı oluşturulamadı.");
-
-    const publish = new URLSearchParams();
-    publish.set("creation_id", data.id);
-    publish.set("access_token", token);
-    const pr = await fetch(`${GRAPH}/${igUserId}/media_publish`, { method: "POST", body: publish });
-    const pd = await pr.json();
-    if (!pr.ok || pd.error) throw new Error(pd?.error?.message || "Instagram fotoğrafı yayınlanamadı.");
-
-    return json({ success: true, pageId, page: page.name, platform: "instagram", mediaId: pd.id });
-  }
-
-  const create = new URLSearchParams();
-  create.set("media_type", "REELS");
-  create.set("video_url", mediaUrl);
-  create.set("caption", caption);
-  create.set("share_to_feed", shareToFeed ? "true" : "false");
-  create.set("access_token", token);
-
-  const r = await fetch(`${GRAPH}/${igUserId}/media`, { method: "POST", body: create });
-  const data = await r.json();
-  if (!r.ok || data.error || !data.id) throw new Error(data?.error?.message || "Instagram Reel kapsayıcısı oluşturulamadı.");
-
-  const containerId = data.id;
-  const deadline = Date.now() + 10 * 60 * 1000;
-  let status = null;
-  while (Date.now() < deadline) {
-    const sr = await fetch(`${GRAPH}/${containerId}?fields=status_code,status&access_token=${encodeURIComponent(token)}`);
-    const sd = await sr.json();
-    if (!sr.ok || sd.error) throw new Error(sd?.error?.message || "Instagram Reel durumu alınamadı.");
-    status = sd;
-    if (sd.status_code === "FINISHED") break;
-    if (["ERROR", "EXPIRED"].includes(sd.status_code)) throw new Error(sd.status || `Instagram Reel durumu: ${sd.status_code}`);
-    await sleep(2500);
-  }
-
-  if (!status || status.status_code !== "FINISHED") throw new Error("Instagram Reel işlenmesi zaman aşımına uğradı.");
-
-  const publish = new URLSearchParams();
-  publish.set("creation_id", containerId);
-  publish.set("access_token", token);
-  const pr = await fetch(`${GRAPH}/${igUserId}/media_publish`, { method: "POST", body: publish });
-  const pd = await pr.json();
-  if (!pr.ok || pd.error) throw new Error(pd?.error?.message || "Instagram Reel yayınlanamadı.");
-
-  return json({ success: true, pageId, page: page.name, platform: "instagram", mediaId: pd.id });
-}
-
 function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
 
 // ============================================================
@@ -1198,7 +1106,7 @@ function home() {
     <div class="landingMark"><span>SP</span></div>
     <div class="landingKicker">SOCIAL PUBLISHER</div>
     <h1>Tek dokunuşla<br><span>çoklu yayın.</span></h1>
-    <p>Facebook Sayfalarını ve bağlı Instagram hesaplarını tek merkezden yönet.</p>
+    <p>Facebook Sayfalarını tek merkezden yönet.</p>
     <a class="landingButton liquidButton" href="/login">Facebook ile Bağlan <span>→</span></a>
     <div class="landingMeta"><span>60 günlük oturum</span><span>•</span><span>Arşiv yok</span><span>•</span><span>R2/KV/D1 yok</span></div>
     <a href="/privacy" class="privacyLink">Gizlilik Politikası</a>
