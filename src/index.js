@@ -69,6 +69,7 @@ const APP_HTML = `<!doctype html><html lang="tr"><head><meta charset="UTF-8"><me
 <div id="toast" class="toastGlass"></div>
 </main><script src="/app.js?v=6" defer></script></body></html>`;
 const APP_JS = `
+if(location.hash==='#_=_'){history.replaceState(null,document.title,location.pathname+location.search)}
 let pages=[];let currentType='post';let storyType='photo';let jobs=[];let lastPayload=null;const selected=new Set();
 const CHUNK_SIZE=24*1024*1024;const CONCURRENCY=3;
 const $=id=>document.getElementById(id);const qs=s=>document.querySelector(s);const qsa=s=>[...document.querySelectorAll(s)];
@@ -77,7 +78,7 @@ function xhrApi(url,options={},onProgress){return new Promise((resolve,reject)=>
 function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(window.__toast);window.__toast=setTimeout(()=>t.classList.remove('show'),2600)}
 function navTo(name){qsa('.navItem').forEach(b=>b.classList.toggle('active',b.dataset.nav===name));qsa('.screenSection').forEach(s=>s.classList.add('hidden'));const map={home:'homeSection',publish:'publishSection',queue:'queueSection',accounts:'accountsSection'};const target=$(map[name]);if(target)target.classList.remove('hidden');const active=qsa('.navItem').find(b=>b.dataset.nav===name);const dock=document.querySelector('.bottomDock');if(active&&dock){const r=active.getBoundingClientRect(),d=dock.getBoundingClientRect();dock.style.setProperty('--glow-left',(r.left-d.left+((r.width-74)/2))+'px')}if(name==='queue'){}}
 function bindUI(){qsa('.navItem').forEach(b=>b.addEventListener('click',()=>navTo(b.dataset.nav)));qsa('.liquidButton').forEach(b=>b.addEventListener('pointerdown',()=>{b.classList.add('pressed');setTimeout(()=>b.classList.remove('pressed'),220)}));$('fbTarget').addEventListener('click',()=>setPlatform('facebook'));$('selectAllBtn').addEventListener('click',selectAll);$('clearAllBtn').addEventListener('click',clearAll);$('refreshPagesBtn').addEventListener('click',refreshPages);$('search').addEventListener('input',renderPages);qsa('.contentCard').forEach(b=>b.addEventListener('click',()=>setType(b.dataset.type)));qsa('.storyTab').forEach(b=>b.addEventListener('click',()=>setStoryType(b.dataset.story)));$('publishBtn').addEventListener('click',publish);$('retryBtn').addEventListener('click',retryFailed);$('clearQueueBtn').addEventListener('click',clearQueue);}
-async function loadPages(){try{const d=await api('/api/pages');pages=d.pages||[];$('heroPageCount').textContent=pages.length;renderPages();renderAccounts();if(pages.length<12)toast('Meta şu anda '+pages.length+' Facebook Sayfası döndürüyor. Eksik sayfalar için yeniden Meta bağlantısı gerekir.')}catch(e){$('pages').innerHTML='<div class="loadingState">⚠️ '+esc(e.message)+'</div>';toast(e.message)}}
+async function loadPages(){try{const d=await api('/api/pages');pages=d.pages||[];$('heroPageCount').textContent=pages.length;renderPages();renderAccounts();if(!pages.length){$('pages').innerHTML='<div class="loadingState">⚠️ Facebook bağlantısı var ancak erişilebilir Sayfa bulunamadı.<br><br><button class="miniButton touch" id="reauthBtn">Facebook bağlantısını yenile</button></div>';const b=$('reauthBtn');if(b)b.addEventListener('click',()=>location.href='/login')}else if(pages.length<12){toast('Meta '+pages.length+' Facebook Sayfası döndürdü.')} }catch(e){$('pages').innerHTML='<div class="loadingState">⚠️ '+esc(e.message)+'<br><br><button class="miniButton touch" id="reauthBtn">Facebook bağlantısını yenile</button></div>';const b=$('reauthBtn');if(b)b.addEventListener('click',()=>location.href='/login');toast(e.message)}}
 async function refreshPages(){const b=$('refreshPagesBtn');if(b){b.disabled=true;b.textContent='↻ Yenileniyor…'}try{await loadPages();toast(pages.length+' Facebook Sayfası Meta’dan alındı.')}finally{if(b){b.disabled=false;b.textContent='↻ Meta’dan yenile'}}}
 function visibleTargets(){const q=($('search').value||'').toLowerCase();return pages.filter(p=>p.name.toLowerCase().includes(q))}
 function renderPages(){const list=visibleTargets();const selectedSet=selected;$('pages').innerHTML=list.length?list.map(p=>{const checked=selectedSet.has(String(p.id));return '<label class="pageRow '+(checked?'selected':'')+'"><input class="pageCheck" id="p_'+escAttr(p.id)+'" type="checkbox" value="'+escAttr(p.id)+'" '+(checked?'checked':'')+'><span class="pageName">'+esc(p.name)+'</span>'+''+'</label>'}).join(''):'<div class="loadingState">Bu hedefte gösterilecek hesap bulunamadı.</div>';qsa('.pageCheck').forEach(x=>x.addEventListener('change',()=>{const id=String(x.value);if(x.checked)selected.add(id);else selected.delete(id);x.closest('.pageRow').classList.toggle('selected',x.checked);updateCount()}));updateCount()}
@@ -401,6 +402,7 @@ function login(url) {
     `&redirect_uri=${encodeURIComponent(redirectUri)}` +
     `&state=${encodeURIComponent(state)}` +
     `&response_type=code` +
+    `&auth_type=rerequest` +
     `&scope=${encodeURIComponent(scope)}`;
 
   return new Response(null, {
@@ -480,7 +482,17 @@ async function apiPages(request) {
   const userToken = getUserToken(request);
   if (!userToken) return json({ error: "Oturum süresi dolmuş." }, 401);
 
-  const pages = await getPages(userToken);
+  let pages;
+  try {
+    pages = await getPages(userToken);
+  } catch (e) {
+    return json({
+      success: false,
+      error: cleanError(e),
+      reauth: true,
+      pages: []
+    }, 400);
+  }
 
   return json({
     success: true,
@@ -491,7 +503,10 @@ async function apiPages(request) {
       id: p.id,
       name: p.name,
       tasks: p.tasks || [],
-    }))
+    })),
+    notice: pages.length === 0
+      ? "Facebook bağlantısı başarılı ancak bu kullanıcı için erişilebilir Sayfa döndürülmedi."
+      : null
   });
 }
 
