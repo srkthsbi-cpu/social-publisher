@@ -396,7 +396,7 @@ function login(url) {
   ].join(",");
 
   const oauth =
-    `https://www.facebook.com/${GRAPH_VERSION}/dialog/oauth` +
+    `https://www.facebook.com/dialog/oauth` +
     `?client_id=${encodeURIComponent(APP_ID)}` +
     `&redirect_uri=${encodeURIComponent(redirectUri)}` +
     `&state=${encodeURIComponent(state)}` +
