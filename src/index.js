@@ -497,34 +497,20 @@ async function apiPages(request) {
 
 async function getPages(userToken) {
   const fields = "id,name,access_token,tasks";
-  const basicFields = "id,name,access_token,tasks";
-
-  async function fetchAll(fieldSet) {
-    let next = `${GRAPH}/me/accounts?fields=${encodeURIComponent(fieldSet)}&limit=100&access_token=${encodeURIComponent(userToken)}`;
+  async function fetchAll() {
+    let next = `${GRAPH}/me/accounts?fields=${encodeURIComponent(fields)}&limit=100&access_token=${encodeURIComponent(userToken)}`;
     const all = [];
-    let first = true;
     while (next) {
       const r = await fetch(next, { cache: "no-store" });
       const data = await r.json().catch(() => ({}));
-      if (!r.ok || data.error) {
-        if (first && fieldSet === fields) throw new Error(data?.error?.message || "Facebook Sayfaları alınamadı.");
-        throw new Error(data?.error?.message || "Facebook Sayfaları alınamadı.");
-      }
+      if (!r.ok || data.error) throw new Error(data?.error?.message || "Facebook Sayfaları alınamadı.");
       all.push(...(data.data || []));
       next = data?.paging?.next || null;
-      first = false;
     }
     return all;
   }
 
-  try {
-    return await fetchAll(fields);
-  } catch (e) {
-    // Instagram alanı yetki nedeniyle hata verirse Facebook Sayfalarını
-    // yine de yükle; Instagram bağlantısı ayrı ve isteğe bağlıdır.
-    const basic = await fetchAll(basicFields);
-    return basic.map(p => ({ ...p, instagram_business_account: null }));
-  }
+  return await fetchAll();
 }
 
 async function getPageToken(request, pageId) {
