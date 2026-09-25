@@ -6,7 +6,7 @@ const RUPLOAD_HOST = "rupload.facebook.com";
 const SESSION_TTL = 60 * 24 * 60 * 60; // 60 gün
 const OAUTH_TTL = 10 * 60;
 
-const APP_HTML = `<!doctype html><html lang="tr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"><meta name="theme-color" content="#e9eef2"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/pwa-icon-180.png"><link rel="stylesheet" href="/style.css?v=8"><title>Social Publisher</title></head><body class="appBody">
+const APP_HTML = `<!doctype html><html lang="tr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"><meta name="theme-color" content="#e9eef2"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/pwa-icon-180.png"><link rel="stylesheet" href="/style.css?v=9"><title>Social Publisher</title></head><body class="appBody">
 <div class="aurora a1"></div><div class="aurora a2"></div><div class="grain"></div>
 <main class="appShell">
 <header class="appTop glass">
@@ -67,7 +67,7 @@ const APP_HTML = `<!doctype html><html lang="tr"><head><meta charset="UTF-8"><me
   <button class="navItem touch" data-nav="accounts"><span class="navIcon">◎</span><span>Hesaplar</span></button>
 </nav>
 <div id="toast" class="toastGlass"></div>
-</main><script src="/app.js?v=6" defer></script></body></html>`;
+</main><script src="/app.js?v=7" defer></script></body></html>`;
 const APP_JS = `
 if(location.hash==='#_=_'){history.replaceState(null,document.title,location.pathname+location.search)}
 let pages=[];let currentType='post';let storyType='photo';let jobs=[];let lastPayload=null;const selected=new Set();
@@ -1134,7 +1134,7 @@ function baseHead(title) { return `
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/pwa-icon-180.png">
-<link rel="stylesheet" href="/style.css?v=8">
+<link rel="stylesheet" href="/style.css?v=9">
 <title>${title}</title>`; }
 
 // ============================================================
