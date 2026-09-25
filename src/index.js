@@ -459,8 +459,24 @@ async function callback(request, url, env) {
     }, 400);
   }
 
+  // Exchange the short-lived login token for Meta's long-lived user token.
+  // The browser cookie alone cannot extend the lifetime of the Meta token.
+  let userToken = data.access_token;
+  try {
+    const longUrl = new URL(`${GRAPH}/oauth/access_token`);
+    longUrl.searchParams.set("grant_type", "fb_exchange_token");
+    longUrl.searchParams.set("client_id", APP_ID);
+    longUrl.searchParams.set("client_secret", env.META_APP_SECRET);
+    longUrl.searchParams.set("fb_exchange_token", data.access_token);
+    const longResponse = await fetch(longUrl);
+    const longData = await longResponse.json();
+    if (longResponse.ok && longData.access_token) {
+      userToken = longData.access_token;
+    }
+  } catch (_) {}
+
   return redirect("/app", [
-    cookie("fb_user_token", data.access_token, SESSION_TTL),
+    cookie("fb_user_token", userToken, SESSION_TTL),
     cookie("oauth_state", "", 0)
   ]);
 }
